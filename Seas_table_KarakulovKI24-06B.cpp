@@ -8,7 +8,6 @@
 #define NOMINMAX
 #include <Windows.h>
 
-
 const int kMaxSeas = 10;              // Максимальное количество морей
 const double kMinDepth = 0.0;         // Минимальная допустимая глубина
 const double kMaxDepth = 12000.0;     // Максимальная допустимая глубина
@@ -116,6 +115,7 @@ void FindSeasBySalinity(const Sea seas[], int sea_count, double target_salinity,
     std::cout << "\n=== МОРЯ С СОЛЁНОСТЬЮ " << target_salinity << "‰ (±" << tolerance << "‰) ===" << std::endl;
     std::cout << "+----------------------+------------+--------------+" << std::endl;
 
+
     bool found = false;
     for (int i = 0; i < sea_count; ++i) {
         if (std::abs(seas[i].salinity - target_salinity) <= tolerance) {
@@ -165,6 +165,63 @@ int ReadSeasFromFile(const std::string& filename, Sea seas[]) {
     return count;
 }
 
+// Функция для записи данных в файл
+void WriteSeasToFile(const std::string& filename, const Sea seas[], int sea_count) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cout << "Ошибка открытия файла " << filename << " для записи" << std::endl;
+        return;
+    }
+
+    // Записываем заголовок
+    file << "Название;Глубина;Солёность" << std::endl;
+
+    // Записываем данные
+    for (int i = 0; i < sea_count; ++i) {
+        file << seas[i].name << ";" << seas[i].depth << ";" << seas[i].salinity << std::endl;
+    }
+
+    file.close();
+    std::cout << "Данные успешно записаны в файл " << filename << std::endl;
+}
+
+// Функция для удаления моря из файла
+void RemoveSeaFromFile(const std::string& filename, const std::string& sea_name) {
+    // Сначала читаем все данные из файла
+    Sea seas[kMaxSeas];
+    int sea_count = ReadSeasFromFile(filename, seas);
+
+    if (sea_count == 0) {
+        std::cout << "Файл пуст или не содержит данных" << std::endl;
+        return;
+    }
+
+    // Ищем море для удаления
+    bool found = false;
+    int new_count = 0;
+    Sea new_seas[kMaxSeas];
+
+    for (int i = 0; i < sea_count; ++i) {
+        if (seas[i].name != sea_name) {
+            new_seas[new_count] = seas[i];
+            new_count++;
+        }
+        else {
+            found = true;
+            std::cout << "Море '" << sea_name << "' найдено и будет удалено" << std::endl;
+        }
+    }
+
+    if (!found) {
+        std::cout << "Море с названием '" << sea_name << "' не найдено в файле" << std::endl;
+        return;
+    }
+
+    // Записываем обновленные данные обратно в файл
+    WriteSeasToFile(filename, new_seas, new_count);
+    std::cout << "Море успешно удалено из файла. Осталось " << new_count << " морей." << std::endl;
+}
+
 // Функция для вывода всех морей
 void PrintAllSeas(const Sea seas[], int sea_count) {
     std::cout << "\n=== ТАБЛИЦА МОРЕЙ ===" << std::endl;
@@ -187,6 +244,7 @@ int main() {
     Sea seas[kMaxSeas];  // Массив для хранения данных о морях
     int sea_count = 0;   // Фактическое количество морей
 
+
     // Настройка вывода дробных чисел
     std::cout << std::fixed << std::setprecision(2);
 
@@ -196,6 +254,7 @@ int main() {
     std::cout << "\nВыберите способ ввода данных:" << std::endl;
     std::cout << "1 - Ввод с клавиатуры" << std::endl;
     std::cout << "2 - Чтение из файла (seas.txt)" << std::endl;
+    std::cout << "3 - Удалить море из файла" << std::endl;
     std::cout << "Ваш выбор: ";
 
     int choice;
@@ -220,6 +279,9 @@ int main() {
             std::cout << "\nМоре #" << (i + 1) << ":" << std::endl;
             InputSeaData(seas[i]);
         }
+
+        // Сохраняем данные в файл
+        WriteSeasToFile("seas.txt", seas, sea_count);
     }
     else if (choice == 2) {
         // Чтение данных из файла
@@ -229,6 +291,15 @@ int main() {
             return 1;
         }
         std::cout << "Успешно прочитано " << sea_count << " морей из файла." << std::endl;
+    }
+    else if (choice == 3) {
+        // Удаление моря из файла
+        std::string sea_name;
+        std::cout << "Введите название моря для удаления: ";
+        std::getline(std::cin, sea_name);
+
+        RemoveSeaFromFile("seas.txt", sea_name);
+        return 0;
     }
     else {
         std::cout << "Неверный выбор!" << std::endl;
@@ -275,6 +346,7 @@ int main() {
     double average_depth = CalculateAverageDepth(seas, sea_count);
     std::cout << "\n=== СТАТИСТИКА ===" << std::endl;
     std::cout << "Средняя глубина всех морей: " << average_depth << " м" << std::endl;
+
 
     // Поиск морей глубже средней глубины
     std::cout << "\n=== МОРЯ ГЛУБЖЕ СРЕДНЕЙ ГЛУБИНЫ ===" << std::endl;
