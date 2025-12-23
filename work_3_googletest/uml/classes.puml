@@ -1,0 +1,35 @@
+@startuml
+title Seas: UML диаграмма зависимостей
+
+class Sea {
+  +name: string
+  +depth: double
+  +salinity: double
+}
+
+class SeaRepository {
+  +ReadSeasFromFile(filename: string): vector<Sea>
+  +WriteSeasToFile(filename: string, seas: vector<Sea>): void
+}
+
+class SeaAnalytics {
+  +FindDeepestSeaIndex(seas: vector<Sea>): int
+  +FindLeastSaltySeaIndex(seas: vector<Sea>): int
+  +CalculateAverageDepth(seas: vector<Sea>): double
+  +SortSeasByDepth(seas: vector<Sea>): void
+  +FindSeasBySalinity(seas: vector<Sea>, target: double, tol: double): vector<Sea>
+}
+
+class SeaPrinter {
+  +PrintSeaData(sea: Sea): void
+  +PrintAllSeas(seas: vector<Sea>): void
+}
+
+SeaRepository --> Sea : uses
+SeaAnalytics --> Sea : uses
+SeaPrinter --> Sea : uses
+
+SeaRepository ..> SeaAnalytics : provides data
+SeaAnalytics ..> SeaPrinter : results
+
+@enduml
